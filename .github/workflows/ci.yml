@@ -1,0 +1,76 @@
+name: Interaction API CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Interaction API
+        uses: actions/checkout@v6
+        with:
+          path: interaction-api
+          persist-credentials: false
+
+      - name: Checkout TERTULIA Kernel
+        uses: actions/checkout@v6
+        with:
+          repository: Tertulia2023/tertulia-kernel
+          ref: c453ea5f94b1ad44200704e14e3de57539fa80dc
+          path: tertulia-kernel
+          ssh-key: ${{ secrets.TERTULIA_KERNEL_DEPLOY_KEY }}
+          persist-credentials: false
+
+      - name: Checkout Query Service
+        uses: actions/checkout@v6
+        with:
+          repository: Tertulia2023/tertulia-query-service
+          ref: 0ef6846b03b8b334c474a4f22c0a19863eee8470
+          path: tertulia-query-service
+          persist-credentials: false
+
+      - name: Checkout Interaction Layer
+        uses: actions/checkout@v6
+        with:
+          repository: Tertulia2023/tertulia-interaction-layer
+          ref: d5fc7c031afd5c23d61a4548b1f22e3591298dc6
+          path: tertulia-interaction-layer
+          ssh-key: ${{ secrets.TERTULIA_INTERACTION_LAYER_DEPLOY_KEY }}
+          persist-credentials: false
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Remove pre-existing TERTULIA Maven artifacts
+        shell: bash
+        run: rm -rf "$HOME/.m2/repository/br/org/tertulia"
+
+      - name: Build and install Kernel
+        working-directory: tertulia-kernel
+        run: mvn -B -ntp clean install
+
+      - name: Build and install Query Service
+        working-directory: tertulia-query-service
+        run: mvn -B -ntp clean install
+
+      - name: Build and install Interaction Layer
+        working-directory: tertulia-interaction-layer
+        run: mvn -B -ntp clean install
+
+      - name: Build and test Interaction API
+        working-directory: interaction-api
+        run: mvn -B -ntp clean test
