@@ -139,4 +139,29 @@ class LocalInteractionApplicationTest {
             );
         }
     }
+
+    @Test
+    void shouldReleasePortWhenClosed()
+            throws Exception {
+
+        int port;
+
+        try (LocalInteractionApplication firstApplication =
+                     LocalInteractionApplication.create(0)) {
+
+            firstApplication.start();
+            port = firstApplication.getPort();
+        }
+
+        try (LocalInteractionApplication secondApplication =
+                     LocalInteractionApplication.create(port)) {
+
+            secondApplication.start();
+
+            assertEquals(
+                    port,
+                    secondApplication.getPort()
+            );
+        }
+    }
 }
