@@ -1,15 +1,40 @@
-﻿# TERTÚLIA Interaction API
+﻿\# TERTÚLIA Interaction API
 
-External transport adapters for the SIT TERTÚLIA Interaction Layer.
 
-Initial scope:
+
+External HTTP/JSON adapter and local executable application for the SIT TERTÚLIA Interaction Layer.
+
+
+
+\## Architecture
+
+
+
+```text
+
+external client
+
+&#x20;     ↓
 
 HTTP / JSON
-    ↓
+
+&#x20;     ↓
+
+POST /interactions
+
+&#x20;     ↓
+
+Interaction API
+
+&#x20;     ↓
+
 Interaction Layer
-    ↓
+
+&#x20;     ↓
+
 Query Service
-    ↓
+
+&#x20;     ↓
+
 TERTÚLIA Kernel
 
-The transport adapter must remain replaceable and must not contain cognitive or territorial knowledge logic.

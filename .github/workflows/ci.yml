@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   build:
-    name: Build and test
+    name: Build, test and verify runnable application
     runs-on: ubuntu-latest
 
     steps:
@@ -71,6 +71,45 @@ jobs:
         working-directory: tertulia-interaction-layer
         run: mvn -B -ntp clean install
 
-      - name: Build and test Interaction API
+      - name: Build, test and package Interaction API
         working-directory: interaction-api
-        run: mvn -B -ntp clean test
+        run: mvn -B -ntp clean package
+
+      - name: Verify runnable Interaction API
+        working-directory: interaction-api
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          java -jar target/tertulia-interaction-api-1.0-SNAPSHOT.jar \
+            > target/application.out 2> target/application.err &
+
+          APP_PID=$!
+
+          cleanup() {
+            kill "$APP_PID" 2>/dev/null || true
+          }
+
+          trap cleanup EXIT
+
+          for attempt in {1..20}; do
+            if curl --silent --fail http://127.0.0.1:18080/interactions \
+              --request POST \
+              --header 'Content-Type: application/json' \
+              --data '{"input":"No processo Execução da Ação 210V, a atividade Capacitação dos agricultores aconteceu?"}' \
+              --output target/response.json; then
+              break
+            fi
+
+            sleep 1
+          done
+
+          cat target/application.out
+          cat target/application.err
+          cat target/response.json
+
+          grep -q '"understood":true' target/response.json
+          grep -q '"evidences":\[\]' target/response.json
+          grep -q '"sources":\[\]' target/response.json
+          grep -q 'No node with the requested subject exists in the Kernel' \
+            target/response.json
